@@ -28,7 +28,7 @@ showch:                         ;调用10h号中断，0号功能，显示存储�
     
     cmp al, 31h
     je Load_1
-
+ 
     cmp al, 32h
     je Load_2
 
@@ -48,10 +48,7 @@ Load_1:                         ;读软盘或硬盘上的若干物理扇区到�
     mov ch, 0                   ;柱面号 起始编号为0 
     mov cl, 2                   ;起始扇区号 起始编号为1
     int 13h                     ;调用读磁盘BIOS的13h功能 
-   
-    push cs
-    push ShowInfo
-    jmp OffSetOfUserPref1 
+    jmp OffSetOfUserPref1
 
 Load_2:                         ;读软盘或硬盘上的若干物理扇区到内存的ES:BX处
     mov ax, cs                  ;段地址 存放数据的内存基地址
@@ -64,11 +61,8 @@ Load_2:                         ;读软盘或硬盘上的若干物理扇区到�
     mov ch, 0                   ;柱面号 起始编号为0 
     mov cl, 3                   ;起始扇区号 起始编号为1
     int 13h                     ;调用读磁盘BIOS的13h功能 
-
-    push cs
-    push ShowInfo
     jmp OffSetOfUserPref2
-
+    
 Load_3:                         ;读软盘或硬盘上的若干物理扇区到内存的ES:BX处
     mov ax, cs                  ;段地址 存放数据的内存基地址
     mov es, ax                  ;设置段地址（不能直接mov es, 段地址）
@@ -80,9 +74,6 @@ Load_3:                         ;读软盘或硬盘上的若干物理扇区到�
     mov ch, 0                   ;柱面号 起始编号为0 
     mov cl, 4                   ;起始扇区号 起始编号为1
     int 13h                     ;调用读磁盘BIOS的13h功能 
-    
-    push cs
-    push ShowInfo
     jmp OffSetOfUserPref3
 
 AfterRun:

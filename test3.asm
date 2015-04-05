@@ -10,6 +10,6 @@ cleanup:
     mov dl, 79
     int 10h
     
-    jmp 7c00h
+    retf
    
     times 512-($-$$) db 0

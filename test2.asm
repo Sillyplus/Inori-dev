@@ -10,7 +10,7 @@ org 8000h
     mov dx, 0200h
     int 10h
     
-    jmp 7c00h
+    retf
 
 msg: db 'hello girl'
 msgl equ ($-msg)
