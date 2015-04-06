@@ -1,21 +1,37 @@
 AS=nasm
-ASFLAG=-f bin
+ASFLAGS=
+CC=i388-elf-gcc
+CFLAGS=-mpreferred-stack-boudnary=2 -ffreestanding -g3
+LD=i386-elf-ld 
+LDFLAGS=-N
 
-Inori.fdd: test1.com test2.com test3.com
-	$(AS) $(ASFLAG) -o $@ Inori.asm
-	dd bs=512 if=test1.com of=Inori.fdd seek=1
-	dd bs=512 if=test2.com of=Inori.fdd seek=2
-	dd bs=512 if=test3.com of=Inori.fdd seek=3
+Floppy.fdd: Inori.bin bootloader.bin 
+	dd if=/dev/zero of=Floppy.fdd count=2880
+	dd if=bootloader.bin of=Floppy.fdd conv=notrunc
+	dd if=Inori.bin of=Floppy.fdd seek=1 conv=notrunc 
+	prinf '\x55\xaa' | dd of=Floppy.fdd bs=1 seek=510 count=2 conv=notrunc
+	
+bootloader.bin: bootloader.o utility.o
+	$(LD) $(LDFLAGS) -Ttext 0x7c00 --oformat binary -o $@ $^
 
-test1.com: test1.asm
-	$(AS) -f bin -o $@ $< 
+Inori.bin: Inori.o syscalls.o
 
-test2.com: test2.asm
-	$(AS) -f bin -o $@ $<
+modul_program: help.com 
 
-test3.com: test3.asm
-	$(AS) -f bin -o $@ $<
+help.com: help.o utility_32cc.o
+
+
+%.o: %.c 
+	$(CC) $(CFLAGS) -c %< -o %@
+
+%.o: %.asm
+	%(AS) $(ASFLAGS) -f elf32 -o %@ $^
+
+%.com: %.o
+	$(LD) $(LDFLAGS) -Ttext 0x0100 --oformat binary -o $@ $^
 
 clean:
-	-rm *.com
-	-rm *.fdd
+	-rm -f *.fdd
+	-rm -f *.o
+	-rm -f *.com
+	-rm -f *.bin
