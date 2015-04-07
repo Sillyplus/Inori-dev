@@ -1,10 +1,10 @@
 [bits 16]
 
-global get_kb_char, write_str, wirte_char, set_char, get_char
+global get_kb_char, write_str, write_char, set_char, get_char
 global sleep, read_disk, get_cursor, move_cursor, clear_scn
 
 _start:
-    
+
 
 ;==========================================================
 ; get_kb_char:
@@ -14,7 +14,8 @@ _start:
 get_kb_char:
     mov ah, 10h
     int 16h
-    ret
+    pop ecx
+    jmp cx
 
 
 ;==========================================================
@@ -23,17 +24,20 @@ get_kb_char:
 ; return: al -> the character
 ;==========================================================
 get_char:
+    push bx
     mov bh, 0h
     mov ah, 08h
     int 10h
-    ret
+    pop bx
+    pop ecx
+    jmp cx
 
 
 ;==========================================================
 ; set_char:
 ; set a char at the given position
 ; paramaters:
-;   0: char to set 
+;   0: char to set
 ;   1: row and column of the position
 ;==========================================================
 set_char:
@@ -41,11 +45,11 @@ set_char:
     push bx
 
     mov bh, 0
-    mov dx, [bp+6]
+    mov dx, [bp+10]
     mov ah, 02h
     int 10h
 
-    mov al, [bp+4]
+    mov al, [bp+6]
     mov bx, 0fh
     mov cx, 1
     mov ah, 09h
@@ -53,24 +57,25 @@ set_char:
 
     pop bx
     leave
-    ret
+    pop ecx
+    jmp cx
 
 
 ;==========================================================
 ; write_str:
-; paramaters: 
+; paramaters:
 ;   0: offset of the string to write (!!!ds)
-;   1: length of the string 
-;   2: row and column of the position 
+;   1: length of the string
+;   2: row and column of the position
 ;==========================================================
 write_str:
     enter 0, 0
     push bx
-    mov dx, [bp+8]
-    mov cx, [bp+4]
+    mov dx, [bp+14]
+    mov cx, [bp+10]
 
     push bp
-    mov bp, [bp+4]
+    mov bp, [bp+6]
 
     mov ax, ds
     mov es, ax
@@ -82,43 +87,46 @@ write_str:
 
     pop bx
     leave
-    ret
+    pop ecx
+    jmp cx
 
 
 ;==========================================================
-; wirte_char:
-; wirte a char at the current position with teletype model
+; write_char:
+; write a char at the current position with teletype model
 ; paramaters:
-;   0: char to write 
+;   0: char to write
 ;==========================================================
-wirte_char:
+write_char:
     enter 0, 0
     push bx
-    mov al, [bp+4]
+    mov al, [bp+6]
     mov bx, 0
-    mov ah, e0h
-    push bp 
+    mov ah, 0eh
+    push bp
     int 10h
     pop bp
-    pop bx 
-    leave 
-    ret
+    pop bx
+    leave
+    pop ecx
+    jmp cx
 
 
 ;==========================================================
 ; sleep:
-; sleep for some time 
+; sleep for some time
 ; paramaters:
 ;   0: interval to sleep in 65536 microseconds
 ;==========================================================
 sleep:
     enter 0, 0
     mov dx, 0
-    mov cx, [bp+4]
+    mov cx, [bp+6]
     mov ah, 86h
     int 15h
     leave
-    ret
+    pop ecx
+    jmp cx
 
 
 ;==========================================================
@@ -127,11 +135,14 @@ sleep:
 ; return: ax -> the cursor position
 ;==========================================================
 get_cursor:
+    push bx
     mov bh, 0h
     mov ah, 3h
     int 10h
-    mov ax, ax
-    ret
+    mov ax, dx
+    pop bx
+    pop ecx
+    jmp cx
 
 
 ;==========================================================
@@ -141,22 +152,27 @@ get_cursor:
 ;==========================================================
 move_cursor:
     enter 0, 0
-    mov dx, [bp, 4]
+    push bx
+    mov dx, [bp+6]
     mov bh, 0h
     mov ah, 2h
     int 10h
-    leave 
-    ret
+    pop bx
+    leave
+    pop ecx
+    jmp cx
 
 
 ;==========================================================
-; clear_scn 
+; clear_scn
 ; clear screen
 ;==========================================================
 clear_scn:
     mov ax, 03h
     int 10h
-    ret
+    pop ecx
+    jmp cx
+
 
 ;==========================================================
 ; read_disk:
@@ -171,47 +187,48 @@ read_disk:
     enter 0, 0
     push bx
     push si
-    push di 
+    push di
 
     mov ah, 08h
-    mov dl, [bp+10]
-    int 13h 
+    mov dl, [bp+18]
+    int 13h
+    inc dh
 
-    mov ah, ds
+    mov ax, ds
     mov es, ax
-    
+
     mov ah, 0h
-    mov al, cl 
+    mov al, cl
     mul dh
 
-    mov dx, ax
-    mov ax, [bp+8]
+    mov bx, ax
+    mov ax, [bp+14]
+    ;div bx
     div bl
-    mov bl, al      ; bl store the cylinder number
+    mov bl, al ;bl stores the Cylinder number
 
-    mov ax, [bp+8]
-    div cl 
-    mov ah, 0h 
+    mov ax, [bp+14]
+    div cl
+    mov ah, 0h ;clear the remainder in ah
     div dh
-    mov bh, ah      ; bh store the head number
+    mov bh, ah ;bh stores the Head number
 
-    mov ax, [bp+8]
-    div cl 
-    inc ah          ; ah store the sector number
+    mov ax, [bp+14]
+    div cl
+    inc ah ;ah stores the Sector number
 
-    mov al, [bp+6]
-    mov ch, bl 
-    mov cl, ah 
+    mov al, [bp+10]
+    mov ch, bl
+    mov cl, ah
     mov dh, bh
-    mov dl, [bp+10]
-    mov bx, [bp+4]
+    mov dl, [bp+18]
+    mov bx, [bp+6]
     mov ah, 02h
     int 13h
 
-    pop di 
-    pop si 
-    pop bx 
-    leave 
-    ret 
-
-
+    pop di
+    pop si
+    pop bx
+    leave
+    pop ecx
+    jmp cx

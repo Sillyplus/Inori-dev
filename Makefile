@@ -1,37 +1,59 @@
 AS=nasm
 ASFLAGS=
-CC=i388-elf-gcc
-CFLAGS=-mpreferred-stack-boudnary=2 -ffreestanding -g3
+CC=i386-elf-gcc
+CFLAGS=-mpreferred-stack-boundary=2 -ffreestanding -g3
 LD=i386-elf-ld 
 LDFLAGS=-N
 
-Floppy.fdd: Inori.bin bootloader.bin 
-	dd if=/dev/zero of=Floppy.fdd count=2880
-	dd if=bootloader.bin of=Floppy.fdd conv=notrunc
-	dd if=Inori.bin of=Floppy.fdd seek=1 conv=notrunc 
-	prinf '\x55\xaa' | dd of=Floppy.fdd bs=1 seek=510 count=2 conv=notrunc
+all: Floppy.img program_list_0 help.com ls.com time.com date.com reboot.com
+	dd if=program_list_0 of=Floppy.img seek=64 conv=notrunc
+	printf '\x40' | dd bs=1 of=Floppy.img seek=446 count=1 conv=notrunc
+	dd if=help.com of=Floppy.img seek=65 conv=notrunc
+	dd if=ls.com of=Floppy.img seek=68 conv=notrunc
+	dd if=time.com of=Floppy.img seek=71 conv=notrunc
+	dd if=date.com of=Floppy.img seek=74 conv=notrunc
+	dd if=reboot.com of=Floppy.img seek=81 conv=notrunc
+
+Floppy.img: Inori.bin bootloader.bin 
+	dd if=/dev/zero of=Floppy.img count=2880
+	dd if=bootloader.bin of=Floppy.img conv=notrunc
+	dd if=Inori.bin of=Floppy.img seek=1 conv=notrunc 
+	printf '\x55\xaa' | dd of=Floppy.img bs=1 seek=510 count=2 conv=notrunc
 	
-bootloader.bin: bootloader.o utility.o
+bootloader.bin: bootloader.o utils.o
 	$(LD) $(LDFLAGS) -Ttext 0x7c00 --oformat binary -o $@ $^
 
-Inori.bin: Inori.o syscalls.o
+Inori.bin: Inori.o utils_32cc.o
+	$(LD) $(LDFLAGS) -Ttext 0x0500 --oformat binary -o $@ $^
 
-modul_program: help.com 
+user_program: help.com ls.com time.com date.com reboot.com 
 
-help.com: help.o utility_32cc.o
-
+#dependencies
+Inori.o: Inori.c Inori.h utils_32cc.h 
+help.com: help.o utils_32cc.o
+help.o: help.c utils_32cc.h user_program.h 
+ls.com: ls.o utils_32cc.o
+ls.o: ls.c utils_32cc.h user_program.h
+time.com: time.o utils_32cc.o
+time.o: time.c utils_32cc.h user_program.h
+date.com: date.o utils_32cc.o 
+date.o: date.c utils_32cc.h user_program.h 
 
 %.o: %.c 
-	$(CC) $(CFLAGS) -c %< -o %@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.asm
-	%(AS) $(ASFLAGS) -f elf32 -o %@ $^
+	$(AS) $(ASFLAGS) -f elf32 -o $@ $^
 
 %.com: %.o
 	$(LD) $(LDFLAGS) -Ttext 0x0100 --oformat binary -o $@ $^
 
+reboot.com: reboot.asm
+	$(AS) $(ASFLAGS) -o $@ $^
+
+
 clean:
-	-rm -f *.fdd
+	-rm -f *.img
 	-rm -f *.o
 	-rm -f *.com
 	-rm -f *.bin
