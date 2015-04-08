@@ -1,2 +1,6 @@
 *.com
 *.fdd
+*.img
+*.o
+*.bin
+
