@@ -13,13 +13,14 @@ __asm__("jmpl $0, $main\n");
 
 #include "Inori.h"
 #include "utils_32cc.h"
+#include "int_handler.h"
 
 const char * const welcome_msg = "Welcome to Inori Operating System.\r\n"
 "Copyright at sillyplus\r\n"
 "Chen Yuanjie 13349014\r\n"
 "Enter 'help' to see help\r\n";
 
-const char * const prompt = "\r\n >> ";
+const char * const prompt = "\r\n>>> ";
 const int8_t cmd_col = 4;
 char cmd_buf[CMD_BUF_LEN];
 
@@ -27,12 +28,31 @@ int8_t wait_cmd();
 int8_t load_program(const char *, uint16_t);
 void run_program();
 
+//void _keyboard_int();
+void _clock_int();
+void _syscall();
+
+void _int33_demo();
+void _int34_demo();
+void _int35_demo();
+void _int36_demo();
+
 int main() {
     int8_t cmd_len;
     char cmd[32];
     char * current_comma_pos, * prev_comma_pos;
     clear_scn();
     write_str(welcome_msg, __builtin_strlen(welcome_msg), 0);
+
+    add_int_handler(0x1c, (void *)clock_int);
+    // add_int_handler()
+    add_int_handler(0x33, (void *)int33_demo);
+    add_int_handler(0x34, (void *)int34_demo);
+    add_int_handler(0x35, (void *)int35_demo);
+    add_int_handler(0x36, (void *)int36_demo);
+
+    // add_int_handler(0x80, (void *)syscall);
+
 
     while (1) {
         write_str_current(prompt, cmd_col + 2);
@@ -107,3 +127,41 @@ void run_program() {
         ".att_syntax;"
     );
 }
+
+
+void _clock_int() {
+    static int8_t current = 0, acc = 3;
+    const char * const marks = "|/-\\|/-\\";
+    uint16_t current_cursor;
+    if (!--acc) {
+        current_cursor = get_cursor();
+        set_char(marks[current++], 0x184f);
+        move_cursor(current_cursor);
+        current %= 8;
+        acc = 3;
+    }
+}
+
+//void _keyboard_int() {
+    
+//}
+
+const char * const ouch = "OUCH!";
+
+void _int33_demo() {
+    write_str(ouch, __builtin_strlen(ouch), 0x0140);
+}
+
+void _int34_demo() {
+    write_str(ouch, __builtin_strlen(ouch), 0x0240);      
+}
+
+void _int35_demo() {
+    write_str(ouch, __builtin_strlen(ouch), 0x0340);
+}
+
+void _int36_demo() {
+    write_str(ouch, __builtin_strlen(ouch), 0x0440);
+}
+
+void _syscall() {}

@@ -15,6 +15,7 @@ int main() {
         "  ls       - List user programs\r\n"
         "  time     - Print current time\r\n"
         "  date     - Print current date\r\n"
+        "  int_demo - A demo using int33~int36\r\n"
         "  reboot   - Reboot\r\n"
         "  <names>  - Run user programs (a comma seperated list)\r\n"
         "Example: ls,date,time<Enter>\r\n";

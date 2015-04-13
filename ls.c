@@ -12,8 +12,7 @@ struct FILE_TABLE_ENTRY {
     const char filename[14], loc, size;
 } __attribute__ ((packed));
 
-int main()
-{
+int main() {
     struct FILE_TABLE_ENTRY file_table[32];
     unsigned short p, i;
 

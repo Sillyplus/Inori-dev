@@ -2,6 +2,7 @@
 
 global get_kb_char, write_str, write_char, set_char, get_char
 global sleep, read_disk, get_cursor, move_cursor, clear_scn
+global add_int_handler
 
 _start:
 
@@ -232,3 +233,34 @@ read_disk:
     leave
     pop ecx
     jmp cx
+
+;==========================================================
+;add_int_handler
+;add an interrupt handler into the IVT
+;   0: Interrupt number
+;   1: Offset of the handler (must be in the curent CS)
+;Return: EAX: The original handler
+;========================================================== 
+
+add_int_handler:
+    enter 0, 0
+    push bx
+    push ds
+    xor bx, bx
+    mov ds, bx
+    mov bl, [bp+6]
+    shl bx, 2
+
+    mov ax, cs 
+    shl eax, 8
+    mov ax, [bp+10]
+
+    xchg [ds:bx], eax 
+
+    pop ds
+    pop bx 
+    leave
+    pop ecx 
+    jmp cx
+
+

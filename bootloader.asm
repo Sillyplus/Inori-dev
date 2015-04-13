@@ -12,7 +12,7 @@ _start:
 
     call clear_scn
 
-    push word 0
+    push word 0x0a20 
     push word welcome_msg_len
     mov cx, welcome_msg
     push cx
@@ -23,7 +23,7 @@ _start:
     call sleep
     add sp, 2
 
-    push word 0100h
+    push word 0x0b18
     push word loading_msg_len
     mov cx, loading_msg
     push cx
