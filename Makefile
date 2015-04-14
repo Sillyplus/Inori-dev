@@ -39,6 +39,8 @@ time.com: time.o utils_32cc.o
 time.o: time.c utils_32cc.h user_program.h
 date.com: date.o utils_32cc.o 
 date.o: date.c utils_32cc.h user_program.h 
+my_int_demo.com: my_int_demo.o utils.o
+my_int_demo.o: my_int_demo.asm 
 
 %.o: %.c 
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -52,8 +54,8 @@ date.o: date.c utils_32cc.h user_program.h
 reboot.com: reboot.asm
 	$(AS) $(ASFLAGS) -o $@ $^
 
-my_int_demo.com: my_int_demo.asm
-	$(AS) $(ASFLAGS) -o $@ $^
+#my_int_demo.com: my_int_demo.asm
+#	$(AS) $(ASFLAGS) -o $@ $^
 
 clean:
 	-rm -f *.img
