@@ -15,9 +15,9 @@ __asm__("jmpl $0, $main\n");
 #include "utils_32cc.h"
 #include "int_handler.h"
 
-const char * const welcome_msg = "Welcome to Inori Operating System.\r\n"
-"Copyright at sillyplus\r\n"
+const char * const welcome_msg = "Inori Operating System -- v0.5\r\n"
 "Chen Yuanjie 13349014\r\n"
+"Email: oi_boy@sina.cn\r\n\r\n"
 "Enter 'help' to see help\r\n";
 
 const char * const prompt = "\r\n>>> ";
@@ -28,7 +28,7 @@ int8_t wait_cmd();
 int8_t load_program(const char *, uint16_t);
 void run_program();
 
-//void _keyboard_int();
+void _keyboard_int();
 void _clock_int();
 void _syscall();
 
@@ -45,7 +45,7 @@ int main() {
     write_str(welcome_msg, __builtin_strlen(welcome_msg), 0);
 
     add_int_handler(0x1c, (void *)clock_int);
-    // add_int_handler()
+    add_int_handler(0x09, (void *)keyboard_int);
     add_int_handler(0x33, (void *)int33_demo);
     add_int_handler(0x34, (void *)int34_demo);
     add_int_handler(0x35, (void *)int35_demo);
@@ -142,26 +142,46 @@ void _clock_int() {
     }
 }
 
-//void _keyboard_int() {
-    
-//}
+void _keyboard_int() {
 
-const char * const ouch = "OUCH!";
+    __asm__ volatile(
+        ".intel_syntax noprefix;"
+        "pushf;"
+        "call far ptr 0xf000:0xe987;"
+        ".att_syntax prefix;"
+    );
+    
+    const char * const ouch0 = "o<";
+    const char * const ouch1 = "o-";
+    static int8_t current = 1;
+
+    uint16_t current_cursor = get_cursor();
+    current ^= 1;
+    if (current == 0) 
+        write_str(ouch0, __builtin_strlen(ouch0), 0x003a);
+    else 
+        write_str(ouch1, __builtin_strlen(ouch1), 0x003a);
+    move_cursor(current_cursor);
+}
 
 void _int33_demo() {
-    write_str(ouch, __builtin_strlen(ouch), 0x0140);
+    const char * const msg_int33 = "I'm call by int33";
+    write_str(msg_int33, __builtin_strlen(msg_int33), 0x013a);
 }
 
 void _int34_demo() {
-    write_str(ouch, __builtin_strlen(ouch), 0x0240);      
+    const char * const msg_int34 = "int34 is cute~";
+    write_str(msg_int34, __builtin_strlen(msg_int34), 0x023a);      
 }
 
 void _int35_demo() {
-    write_str(ouch, __builtin_strlen(ouch), 0x0340);
+    const char * const msg_int35 = "Hello int35 >.<";
+    write_str(msg_int35, __builtin_strlen(msg_int35), 0x033a);
 }
 
 void _int36_demo() {
-    write_str(ouch, __builtin_strlen(ouch), 0x0440);
+    const char * const msg_int36 = "int36 is not int36";
+    write_str(msg_int36, __builtin_strlen(msg_int36), 0x043a);
 }
 
 void _syscall() {}

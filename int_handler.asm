@@ -9,12 +9,10 @@
 
 INT_HANDLER clock_int
 INT_HANDLER syscall 
-; INT_HANDLER key_board_int
+INT_HANDLER keyboard_int
 
 INT_HANDLER int33_demo
 INT_HANDLER int34_demo
 INT_HANDLER int35_demo
 INT_HANDLER int36_demo
-
-
 

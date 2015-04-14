@@ -46,7 +46,7 @@ my_int_demo.o: my_int_demo.asm
 	$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.asm
-	$(AS) $(ASFLAGS) -f elf32 -o $@ $^
+	$(AS) $(ASFLAGS) -f elf32 -o $@ $<
 
 %.com: %.o
 	$(LD) $(LDFLAGS) -Ttext 0x0100 --oformat binary -o $@ $^

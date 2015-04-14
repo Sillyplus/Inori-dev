@@ -8,7 +8,7 @@
 #ifndef _INT_HANDLER_H
 #define _INT_HANDLER_H
 
-// void key_board_int();
+void keyboard_int();
 void clock_int();
 void syscall();
 
