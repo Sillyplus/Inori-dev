@@ -57,6 +57,11 @@ reboot.com: reboot.asm
 #my_int_demo.com: my_int_demo.asm
 #	$(AS) $(ASFLAGS) -o $@ $^
 
+.PHONY:qemu
+qemu: 
+	qemu -fda Floppy.img
+
+.PHONY:clean
 clean:
 	-rm -f *.img
 	-rm -f *.o
