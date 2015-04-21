@@ -3,7 +3,7 @@
 	> Author: sillyplus
 	> Mail: oi_boy@sina.cn
 	> Created Time: Tue Apr  7 16:38:13 2015
- ******************************************************************************/
+*******************************************************************************/
 
 __asm__(".code16gcc\n");
 __asm__("mov $0, %eax\n");
@@ -14,8 +14,9 @@ __asm__("jmpl $0, $main\n");
 #include "Inori.h"
 #include "utils_32cc.h"
 #include "int_handler.h"
+#include "syscall.h"
 
-const char * const welcome_msg = "Inori Operating System -- v0.5\r\n"
+const char * const welcome_msg = "Inori Operating System -- v0.6.1\r\n"
 "Chen Yuanjie 13349014\r\n"
 "Email: oi_boy@sina.cn\r\n\r\n"
 "Enter 'help' to see help\r\n";
@@ -23,6 +24,7 @@ const char * const welcome_msg = "Inori Operating System -- v0.5\r\n"
 const char * const prompt = "\r\n>>> ";
 const int8_t cmd_col = 4;
 char cmd_buf[CMD_BUF_LEN];
+void * prev_esp;
 
 int8_t wait_cmd();
 int8_t load_program(const char *, uint16_t);
@@ -31,11 +33,6 @@ void run_program();
 void _keyboard_int();
 void _clock_int();
 void _syscall();
-
-void _int33_demo();
-void _int34_demo();
-void _int35_demo();
-void _int36_demo();
 
 int main() {
     int8_t cmd_len;
@@ -46,13 +43,7 @@ int main() {
 
     add_int_handler(0x1c, (void *)clock_int);
     add_int_handler(0x09, (void *)keyboard_int);
-    add_int_handler(0x33, (void *)int33_demo);
-    add_int_handler(0x34, (void *)int34_demo);
-    add_int_handler(0x35, (void *)int35_demo);
-    add_int_handler(0x36, (void *)int36_demo);
-
-    // add_int_handler(0x80, (void *)syscall);
-
+    add_int_handler(0x21, (void *)syscall);
 
     while (1) {
         write_str_current(prompt, cmd_col + 2);
@@ -122,12 +113,42 @@ int8_t load_program(const char * cmd, uint16_t len) {
 
 void run_program() {
     __asm__ volatile(
-        ".intel_syntax;"
+        ".intel_syntax noprefix;"
+        "pushad;"
+        "pushf;"
+        "mov %0, esp;"
+        ".att_syntax;"
+        : "=m"(prev_esp)
+        :
+        :
+    );
+    __asm__ volatile(
+        ".intel_syntax noprefix;"
+        "mov ax, 0x7d0;"
+        "mov es, ax;"
+        "mov ds, ax;"
+        "mov ss, ax;"
+        "mov esp, 0xffff;"
         "call 0x7d0:0x0100;"
         ".att_syntax;"
     );
+    __asm__ volatile(
+        ".globl run_program_cleanup;"
+        ".intel_syntax noprefix;"
+        "run_program_cleanup:"
+        "xor ax, ax;"
+        "mov ss, ax;"
+        "mov ds, ax;"
+        "mov es, ax;"
+        "mov esp, %0;"
+        "popf;"
+        "popad;"
+        ".att_syntax;"
+        :
+        : "m"(prev_esp)
+        : "ax"
+    );
 }
-
 
 void _clock_int() {
     static int8_t current = 0, acc = 3;
@@ -164,24 +185,64 @@ void _keyboard_int() {
     move_cursor(current_cursor);
 }
 
-void _int33_demo() {
-    const char * const msg_int33 = "I'm call by int33";
-    write_str(msg_int33, __builtin_strlen(msg_int33), 0x013a);
+void _syscall() {
+     __asm__ volatile(
+        ".intel_syntax noprefix;"
+        "mov di, cs;"
+        "mov ds, di;"
+        "mov es, di;"
+        ".att_syntax;"
+        :
+        :
+        : "di"
+    ); 
+
+    register int32_t syscall_num asm("eax"), 
+                     p1 asm("ebx"),
+                     p2 asm("ecx"),
+                     p3 asm("edx");
+
+    if (syscall_num < 0 || syscall_num > 10) {
+        errno = ENOSYS;
+        return;
+    }
+
+    errno = 0;
+    switch (syscall_num) { 
+        case 0:
+            sys_exit();
+            break;
+        case 1:
+            sys_low2up();
+            break;
+        case 2:
+            sys_up2low((char *)p1, p2, p3);
+            break;
+        case 3:
+            sys_num2str();
+            break;
+        case 4:
+            sys_str2num();
+        case 5: 
+            sys_pstr();
+            break;
+        case 6:
+            sys_ouch();
+            break;
+//         case 1: 
+//             sys_exit(p1); 
+//             break;
+//         case 3: 
+//             syscall_num = sys_read(p1, (void *)p2, p3); 
+//             break;
+//         case 4: 
+//             syscall_num = sys_write(p1, (void *)p2, p3); 
+//             break;
+//         case 13: 
+//             syscall_num = sys_time((time_t *)p1); 
+//             break;
+        default: 
+            errno = ENOSYS;
+    }   
 }
 
-void _int34_demo() {
-    const char * const msg_int34 = "int34 is cute~";
-    write_str(msg_int34, __builtin_strlen(msg_int34), 0x023a);      
-}
-
-void _int35_demo() {
-    const char * const msg_int35 = "Hello int35 >.<";
-    write_str(msg_int35, __builtin_strlen(msg_int35), 0x033a);
-}
-
-void _int36_demo() {
-    const char * const msg_int36 = "int36 is not int36";
-    write_str(msg_int36, __builtin_strlen(msg_int36), 0x043a);
-}
-
-void _syscall() {}

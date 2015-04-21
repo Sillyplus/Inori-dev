@@ -12,9 +12,4 @@ void keyboard_int();
 void clock_int();
 void syscall();
 
-void int33_demo();
-void int34_demo();
-void int35_demo();
-void int36_demo();
-
 #endif
