@@ -57,7 +57,7 @@ reboot.com: reboot.asm
 
 .PHONY:qemu
 qemu: 
-	qemu -fda Floppy.img
+	qemu-system-i386 -fda Floppy.img
 
 .PHONY:clean
 clean:
